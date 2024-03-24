@@ -1,0 +1,61 @@
+# This workflow will build the GithubActionsDemo project
+
+name: cicl.yaml
+
+on:
+  push:
+    branches:
+    - "master"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Install .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Check out this repo
+      uses: actions/checkout@v4
+
+    - name: Restore dependencies (install Nuget packages)
+      run: dotnet restore
+
+    - name: Build and publish the app
+      run: |
+        dotnet build --no-restore
+        dotnet publish -c Release -o ./publish        
+
+    - name: Upload app artifacts to Github
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-artifacts
+        path: ./publish
+
+
+
+  deploy:
+    runs-on: self-hosted
+    needs: build
+
+    steps:
+    - name: Download the artifacts from Github (from the build job)
+      uses: actions/download-artifact@v4
+      with:
+        name: app-artifacts
+
+    - name: Stop the application service
+      run: |
+        sudo systemctl stop CloToDo.service        
+
+    - name: Deploy the the application
+      run: |
+        sudo rm -Rf /opt/CloToDo || true
+        sudo cp -r /home/azureuser/actions-runner/_work/CloToDo/CloToDo/ /opt/CloToDo        
+
+    - name: Start the application service
+      run: |
+        sudo systemctl start CloToDo.service        
