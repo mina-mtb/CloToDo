@@ -5,7 +5,7 @@ name: cicl.yaml
 on:
   push:
     branches:
-    - "master"
+    - "main"
   workflow_dispatch:
 
 jobs:
